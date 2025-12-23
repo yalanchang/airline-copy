@@ -6,6 +6,8 @@ export default function Page() {
   const [scrollY, setScrollY] = useState(0);
   const [mousePos, setMousePos] = useState({ x: 0, y: 0 });
   const [mounted, setMounted] = useState(false);
+  const [cloudOffset, setCloudOffset] = useState(0);
+
 
   useEffect(() => {
     setMounted(true);
@@ -18,31 +20,41 @@ export default function Page() {
     };
     window.addEventListener('scroll', handleScroll);
     window.addEventListener('mousemove', handleMouse);
+
+    let animationId: number;
+    const animateClouds = () => {
+      setCloudOffset(prev => {
+        if (prev < -2000) return 0;
+        return prev - 3;//加速
+      });
+      animationId = requestAnimationFrame(animateClouds);
+    };
+    animationId = requestAnimationFrame(animateClouds);
     return () => {
       window.removeEventListener('scroll', handleScroll);
       window.removeEventListener('mousemove', handleMouse);
+      //啟動動畫
+      cancelAnimationFrame(animationId);
+
     };
   }, []);
 
-  const cloudImages = [
-    '/cloud.png',
-  ];
-  const Cloud = ({ style, size = 400, opacity = 0.8, duration = 60, delay = 0, imgIndex = 0 }: {
-    style: React.CSSProperties; size?: number; opacity?: number; duration?: number; delay?: number; imgIndex?: number;
+  const Cloud = ({ top, startX, size = 400, opacity = 0.8, speed = 1, behindPlane = false }: {
+    top: string; startX: number; size?: number; opacity?: number; speed?: number; behindPlane?: boolean;
   }) => (
     <div
-      className="absolute pointer-events-none"
+      className="fixed pointer-events-none -z-20"
       style={{
-        ...style,
+        top,
+        left: `${startX + cloudOffset * speed}px`,
         width: `${size}px`,
-        height: `${size * 0.5}px`,
         opacity,
-        animation: `cloud-drift ${duration}s linear infinite`,
-        animationDelay: `${delay}s`,
+        zIndex: behindPlane ? 15 : -20,
+
       }}
     >
       <img
-        src={cloudImages[imgIndex % cloudImages.length]}
+        src="/cloud.png"
         alt=""
         className="w-full h-auto"
       />
@@ -51,6 +63,7 @@ export default function Page() {
 
   return (
     <div className="relative w-full">
+
       <header>
         <div className="w-full mx-auto px-10 py-5 flex items-center justify-start gap-20 bg-[#4BA3C7] fixed top-0 left-0 z-50">
           <div className="text-2xl font-bold text-white">
@@ -75,6 +88,7 @@ export default function Page() {
       </header>
 
       <div className="fixed inset-0 -z-30">
+
         <div className="absolute inset-0" style={{ background: 'linear-gradient(180deg, #4BA3C7 0%, #7EC8E3 30%, #a3d9ed 60%, #c5e8f2 100%)' }} />
       </div>
 
@@ -82,7 +96,7 @@ export default function Page() {
         className="fixed w-80 h-80 rounded-full -z-25 transition-transform duration-700"
         style={{ top: '-80px', left: '-80px', background: 'radial-gradient(circle, rgba(180,160,255,0.3) 60%)', transform: `translate(${mousePos.x * 30}px, ${scrollY * 0.3 + mousePos.y * 30}px)` }}
       />
-         <div
+      <div
         className="fixed w-40 h-40 rounded-full -z-25 transition-transform duration-700"
         style={{ top: '380px', left: '80px', background: 'radial-gradient(circle, rgba(180,160,255,0.3) 60%)', transform: `translate(${mousePos.x * 30}px, ${scrollY * 0.3 + mousePos.y * 30}px)` }}
       />
@@ -90,50 +104,54 @@ export default function Page() {
         className="fixed w-56 h-56 rounded-full -z-25 transition-transform duration-500"
         style={{ top: '60px', right: '-50px', background: 'radial-gradient(circle, rgba(255,150,170,0.35) 0% 60%)', transform: `translate(${mousePos.x * -25}px, ${-scrollY * 0.2 + mousePos.y * 25}px)` }}
       />
-        <div
+      <div
         className="fixed w-36 h-36 rounded-full -z-25 transition-transform duration-500"
         style={{ top: '500px', right: '50px', background: 'radial-gradient(circle, rgba(255,150,170,0.35) 0% 60%)', transform: `translate(${mousePos.x * 125}px, ${-scrollY * 0.2 + mousePos.y * 25}px)` }}
       />
 
 
-      <div className="fixed inset-0 -z-20 overflow-hidden">
-        <Cloud style={{ top: '5%', right: '-300px' }} opacity={0.35} duration={90} />
-        <Cloud style={{ top: '20%', right: '-300px' }} opacity={0.3} duration={100} delay={25} />
+
+
+
+      <div
+        className="flex flex-col items-center animate-plane-float pt-60 "
+        style={{ transform: `translateY(${-scrollY * 0.3}px)` }}
+      >
+        <div className="text-center z-10">
+          <h1 className="text-6xl md:text-8xl font-black text-white" style={{ textShadow: '3px 3px 0 rgba(0,150,200,0.3)' }}>
+            <span className="inline-block">動物方城市2</span>
+            <br />
+            <span className="inline-block">主題彩繪機</span>
+          </h1>
+        </div>
+        {/*在飛機後面*/}
+        <Cloud top="50%" startX={1400} size={700} opacity={0.9} speed={0.8} behindPlane={true} />
+        <Cloud top="65%" startX={2200} size={550} opacity={0.7} speed={1.1} behindPlane={true} />
+        <Cloud top="55%" startX={1900} size={450} opacity={0.6} speed={0.9} behindPlane={true} />
+        <div className="w-[95vw] max-w-6xl z-30 mt-[-50px]">
+          <img
+            src="./fly.png"
+            alt="飛機"
+            className="w-full h-auto"
+            style={{ filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.15))' }}
+          />
+        </div>
+
       </div>
 
-  
-  <div 
-    className="flex flex-col items-center animate-plane-float pt-60 "
-    style={{ transform: `translateY(${-scrollY * 0.3}px)` }}
-  >
-    <div className="text-center z-10">
-      <h1 className="text-6xl md:text-8xl font-black text-white" style={{ textShadow: '3px 3px 0 rgba(0,150,200,0.3)' }}>
-        <span className="inline-block">動物方城市2</span>
-        <br />
-        <span className="inline-block">主題彩繪機</span>
-      </h1>
-    </div>
-
-    <div className="w-[95vw] max-w-6xl z-20 mt-[-50px]">
-      <img
-        src="./fly.png"
-        alt="飛機"
-        className="w-full h-auto"
-        style={{ filter: 'drop-shadow(0 30px 60px rgba(0,0,0,0.15))' }}
-      />
-    </div>
-  
-</div>
       <div className="relative z-30 h-[300px] overflow-hidden">
 
         <div
           className=" inset-0"
           style={{ background: 'linear-gradient(180deg, #7EC8E3 0%, #a8dced 100%)' }}
         />
+        {/*在飛機前面*/}
+        <Cloud top="89%" startX={1200} size={600} opacity={1.4} speed={1} behindPlane={false} />
+        <Cloud top="73%" startX={1800} size={500} opacity={1.2} speed={1.3} behindPlane={false} />
+        <Cloud top="78%" startX={1600} size={420} opacity={1.7} speed={1.6} behindPlane={false} />
+        <Cloud top="82%" startX={2000} size={520} opacity={0.6} speed={1.2} behindPlane={false} />
 
-        <Cloud style={{ top: '10%', right: '-100px' }} size={350} opacity={0.7} duration={50} />
-        <Cloud style={{ top: '40%', left: '-50px' }} size={300} opacity={0.6} duration={60} delay={10} />
-        <Cloud style={{ top: '25%', right: '30%' }} size={280} opacity={0.5} duration={55} delay={20} />
+
 
         <svg
           viewBox="0 0 1440 150"
